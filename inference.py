@@ -117,6 +117,7 @@ class ExactInference(InferenceModule):
         "Begin with a uniform distribution over ghost positions."
         self.beliefs = util.Counter()
         for p in self.legalPositions: self.beliefs[p] = 1.0
+        #normalize the distribution of all the positions and their corresponding beliefs
         self.beliefs.normalize()
 
     def observe(self, observation, gameState):
@@ -152,10 +153,12 @@ class ExactInference(InferenceModule):
         # Be sure to handle the "jail" edge case where the ghost is eaten
         # and noisyDistance is None
         allPossible = util.Counter()
+        #edge case where the ghost is eaten 
         if noisyDistance == None:
             allPossible[self.getJailPosition()] = 1.0
             self.beliefs = allPossible
         else:
+            #else update the probabilities of ghost locations 
             for p in self.legalPositions:
                 trueDistance = util.manhattanDistance(p, pacmanPosition)
                 if emissionModel[trueDistance] > 0: allPossible[p] = self.beliefs[p]*emissionModel[trueDistance]
@@ -219,6 +222,7 @@ class ExactInference(InferenceModule):
         updatedPos = util.Counter()
         for p in self.legalPositions:
             newPosDist = self.getPositionDistribution(self.setGhostPosition(gameState, p))
+            #each new time step prob only depends on the time step before it
             for newPos, prob in newPosDist.items():
                 updatedPos[newPos] += self.beliefs[p]*prob
 
@@ -268,6 +272,7 @@ class ParticleFilter(InferenceModule):
                     self.particles.append(p)
                     numOfPart-=len(legalMoves)
             else:
+                #when the number of left over particles is less than the possible particle locations
                 i = 0
                 while numOfPart > 0:
                     self.particles.append(legalMoves[i])
@@ -313,6 +318,7 @@ class ParticleFilter(InferenceModule):
         self.beliefs = self.getBeliefDistribution()
         self.particles = []
 
+        #edge case one: capture ghost
         if noisyDistance == None:
             selfnum = self.numParticles
             while selfnum > 0:
@@ -324,6 +330,7 @@ class ParticleFilter(InferenceModule):
                 if emissionModel[trueDistance] > 0: allPossible[p] = emissionModel[trueDistance] * self.beliefs[p]
             allPossible.normalize()
             selfnum = self.numParticles
+            #edge case 2 = all particles have 0 weight
             if allPossible.totalCount() == 0:
                 self.initializeUniformly(selfnum)
             else:

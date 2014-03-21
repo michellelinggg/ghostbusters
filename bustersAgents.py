@@ -172,6 +172,7 @@ class GreedyBustersAgent(BustersAgent):
 
         bestMove = None
         closestDist = float("inf")
+        #find action that will bring you to most likely position of closest to ghost
         for action in legal:
             nextPosition = Actions.getSuccessor(pacmanPosition, action)
             if self.distancer.getDistance(nextPosition, closestGhost) < closestDist:
